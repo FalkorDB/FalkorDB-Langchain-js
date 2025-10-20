@@ -12,11 +12,6 @@ jobs:
         image: falkordb/falkordb:latest
         ports:
           - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -24,7 +19,10 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm run build
-      - run: npm test
+      - name: Run tests
+        run: |
+          sleep 5
+          npm test
 
   publish-npm:
     needs: build
