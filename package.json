@@ -1,6 +1,6 @@
 {
   "name": "@falkordb/langchain-ts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "FalkorDB integration for LangChain.js - A blazing fast graph database for AI applications",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
