@@ -4,32 +4,45 @@ sidebar_label: FalkorDB
 
 # FalkorDB
 
-[FalkorDB](https://www.falkordb.com/) is a blazing fast graph database used as the knowledge graph alongside LangChain.
+The [@falkordb/langchain-ts](https://www.npmjs.com/package/@falkordb/langchain-ts) package enables developers to use FalkorDB's blazing fast graph database alongside their LangChain applications.
 
-This guide will help you get started with FalkorDB graph chains in LangChain.
+[FalkorDB](https://www.falkordb.com/) is a high-performance graph database built on Redis that enables you to build knowledge graphs and perform complex graph queries with exceptional speed.
+
+## Features
+
+- 🚀 **Blazing Fast**: Built on Redis with optimized graph operations
+- 🔗 **Cypher Support**: Use the powerful Cypher query language
+- 🧠 **LLM Integration**: Seamless integration with LangChain's QA chains
+- 📊 **Schema Management**: Automatic schema detection and updates
+- 🔄 **Async/Await**: Modern async API
+- 📝 **TypeScript**: Full TypeScript support with type definitions
 
 ## Installation
 
-FalkorDB integration is available in the `@langchain/community` package.
-
 ```bash npm2yarn
-npm install @langchain/community
+npm install @falkordb/langchain-ts falkordb
 ```
 
-## Setup
+You'll also need LangChain and a language model:
 
-To use FalkorDB with LangChain, you'll need to have FalkorDB running. The easiest way is using Docker:
+```bash npm2yarn
+npm install langchain @langchain/openai
+```
+
+## Quick Start
+
+### 1. Start FalkorDB
+
+The easiest way to run FalkorDB is with Docker:
 
 ```bash
 docker run -p 6379:6379 -it --rm falkordb/falkordb:latest
 ```
 
-## Usage
-
-Here's how to use FalkorDB with LangChain for graph-based question answering:
+### 2. Basic Usage
 
 ```typescript
-import { FalkorDBGraph } from "@langchain/community/graphs/falkordb";
+import { FalkorDBGraph } from "@falkordb/langchain-ts";
 import { OpenAI } from "@langchain/openai";
 import { GraphCypherQAChain } from "langchain/chains/graph_qa/cypher";
 
@@ -62,52 +75,137 @@ const chain = GraphCypherQAChain.fromLLM({
 const response = await chain.run("Who played in Pulp Fiction?");
 console.log(response);
 // Output: Bruce Willis played in Pulp Fiction.
+
+// Clean up
+await graph.close();
 ```
 
-## Configuration Options
+## API Reference
 
-The `FalkorDBGraph.initialize()` method accepts the following configuration options:
+### FalkorDBGraph
 
-- `host`: The hostname of your FalkorDB instance (default: "localhost")
-- `port`: The port number (default: 6379)
-- `graph`: The name of your graph database
-- `enhancedSchema`: Enable enhanced schema details (default: false)
-- `username`: Optional username for authentication
-- `password`: Optional password for authentication
+#### `initialize(config: FalkorDBGraphConfig): Promise<FalkorDBGraph>`
 
-### Alternative Configuration
+Creates and initializes a new FalkorDB connection.
 
-You can also use the legacy URL format for backward compatibility:
+**Config Options:**
 
+- `host` (string, optional): Database host. Default: `"localhost"`
+- `port` (number, optional): Database port. Default: `6379`
+- `graph` (string, optional): Graph name to use
+- `url` (string, optional): Alternative connection URL format
+- `enhancedSchema` (boolean, optional): Enable enhanced schema details. Default: `false`
+
+**Example:**
 ```typescript
 const graph = await FalkorDBGraph.initialize({
-  url: "redis://localhost:6379",
-  graph: "movies"
+  host: "localhost",
+  port: 6379,
+  graph: "myGraph",
+  enhancedSchema: true
 });
+```
+
+#### `query(query: string): Promise<any>`
+
+Executes a Cypher query on the graph.
+
+```typescript
+const result = await graph.query(
+  "MATCH (n:Person) RETURN n.name LIMIT 10"
+);
+```
+
+#### `refreshSchema(): Promise<void>`
+
+Updates the graph schema information.
+
+```typescript
+await graph.refreshSchema();
+console.log(graph.getSchema());
+```
+
+#### `getSchema(): string`
+
+Returns the current graph schema as a formatted string.
+
+#### `getStructuredSchema(): StructuredSchema`
+
+Returns the structured schema object containing node properties, relationship properties, and relationships.
+
+#### `close(): Promise<void>`
+
+Closes the database connection.
+
+```typescript
+await graph.close();
 ```
 
 ## Advanced Usage
 
 ### Custom Cypher Queries
 
-You can execute custom Cypher queries directly:
-
 ```typescript
-// Execute a custom query
-const result = await graph.query(
-  "MATCH (a:Actor)-[:ACTED_IN]->(m:Movie) RETURN a.name, m.title"
-);
-console.log(result);
+const graph = await FalkorDBGraph.initialize({
+  host: "localhost",
+  port: 6379,
+  graph: "movies"
+});
+
+// Complex query
+const result = await graph.query(`
+  MATCH (a:Actor)-[:ACTED_IN]->(m:Movie)
+  WHERE m.year > 2000
+  RETURN a.name, m.title, m.year
+  ORDER BY m.year DESC
+  LIMIT 10
+`);
+
+console.log(result.data);
 ```
 
-### Schema Information
-
-FalkorDB automatically tracks your graph schema:
+### Multiple Queries
 
 ```typescript
-// Get the current schema
-console.log(graph.getSchema());
+await graph.executeQueries([
+  "CREATE (p:Person {name: 'Alice'})",
+  "CREATE (p:Person {name: 'Bob'})",
+  "MATCH (a:Person {name: 'Alice'}), (b:Person {name: 'Bob'}) CREATE (a)-[:KNOWS]->(b)"
+]);
+```
 
-// Refresh schema after making changes
+### Working with Schema
+
+```typescript
 await graph.refreshSchema();
+
+// Get formatted schema
+const schema = graph.getSchema();
+console.log(schema);
+
+// Get structured schema
+const structuredSchema = graph.getStructuredSchema();
+console.log(structuredSchema.nodeProps);
+console.log(structuredSchema.relationships);
 ```
+
+## Requirements
+
+- Node.js >= 18
+- FalkorDB server running (Redis-compatible)
+- LangChain >= 0.1.0
+
+## Examples
+
+For more examples, see the [@falkordb/langchain-ts repository](https://github.com/FalkorDB/FalkorDB-Langchain-js) on GitHub.
+
+## License
+
+MIT
+
+## Support
+
+- 📫 [GitHub Issues](https://github.com/FalkorDB/FalkorDB-Langchain-js/issues)
+- 💬 [FalkorDB Discord](https://discord.gg/falkordb)
+- 📧 Email: support@falkordb.com
+- 🌐 Website: https://www.falkordb.com/
