@@ -34,6 +34,11 @@ export class FalkorDBGraph {
 
   private port: number;
 
+  // LangChain compatibility properties
+  public database: string = "falkordb";
+  public timeoutMs: number = 30000;
+  public enhancedSchemaCypher: boolean = false;
+
   constructor({
     host = "localhost",
     port = 6379,
@@ -110,6 +115,7 @@ export class FalkorDBGraph {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async query(query: string): Promise<any> {
     if (!this.graph) {
       throw new Error("No graph selected. Call selectGraph() first.");
@@ -285,11 +291,13 @@ export class FalkorDBGraph {
   /**
    * Execute multiple queries in sequence
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async executeQueries(queries: string[]): Promise<any[]> {
     if (!this.graph) {
       throw new Error("No graph selected. Call selectGraph() first.");
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results: any[] = [];
     for (const query of queries) {
       try {
@@ -319,5 +327,16 @@ export class FalkorDBGraph {
         error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to clear graph: ${errorMessage}`);
     }
+  }
+
+  /**
+   * LangChain compatibility method - not implemented for FalkorDB
+   * @throws Error indicating this method is not implemented
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  async addGraphDocuments(_documents: any[]): Promise<void> {
+    throw new Error(
+      "addGraphDocuments is not implemented for FalkorDB. Please use the query() method directly to add data."
+    );
   }
 }

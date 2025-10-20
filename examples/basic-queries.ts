@@ -2,7 +2,7 @@ import { FalkorDBGraph } from "@falkordb/langchain-ts";
 
 /**
  * Basic example showing direct Cypher query usage
- * 
+ *
  * Prerequisites:
  * docker run -p 6379:6379 -it --rm falkordb/falkordb:latest
  */
@@ -12,7 +12,7 @@ async function main() {
   const graph = await FalkorDBGraph.initialize({
     host: "localhost",
     port: 6379,
-    graph: "social"
+    graph: "social",
   });
 
   console.log("Creating social network graph...\n");

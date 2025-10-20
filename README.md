@@ -27,7 +27,7 @@ npm install @falkordb/langchain-ts falkordb
 You'll also need LangChain and a language model:
 
 ```bash
-npm install langchain @langchain/openai
+npm install langchain @langchain/openai @langchain/community
 ```
 
 ## Quick Start
@@ -45,7 +45,7 @@ docker run -p 6379:6379 -it --rm falkordb/falkordb:latest
 ```typescript
 import { FalkorDBGraph } from "@falkordb/langchain-ts";
 import { OpenAI } from "@langchain/openai";
-import { GraphCypherQAChain } from "langchain/chains/graph_qa/cypher";
+import { GraphCypherQAChain } from "@langchain/community/chains/graph_qa/cypher";
 
 // Initialize connection
 const graph = await FalkorDBGraph.initialize({
@@ -65,9 +65,10 @@ await graph.refreshSchema();
 
 // Set up QA chain
 const model = new OpenAI({ temperature: 0 });
+// Note: Type assertion needed for LangChain compatibility
 const chain = GraphCypherQAChain.fromLLM({
   llm: model,
-  graph,
+  graph: graph as any,
 });
 
 // Ask questions about your graph
