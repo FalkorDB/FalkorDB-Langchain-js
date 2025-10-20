@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      falkordb:
+        image: falkordb/falkordb:latest
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run build
+      - name: Wait for FalkorDB to be ready
+        run: |
+          echo "Waiting for FalkorDB to be ready..."
+          max_attempts=30
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            if nc -z localhost 6379 2>/dev/null; then
+              echo "FalkorDB port is open, waiting a bit more for full initialization..."
+              sleep 3
+              echo "FalkorDB is ready!"
+              break
+            fi
+            echo "Attempt $attempt/$max_attempts: FalkorDB not ready yet..."
+            sleep 2
+            attempt=$((attempt + 1))
+          done
+          if [ $attempt -gt $max_attempts ]; then
+            echo "FalkorDB failed to start after $max_attempts attempts"
+            exit 1
+          fi
+      - run: npm test
