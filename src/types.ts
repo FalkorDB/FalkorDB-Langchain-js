@@ -1,15 +1,18 @@
+import type { FalkorDB } from "falkordb";
+import type { FalkorDBOptions } from "falkordb/dist/src/falkordb";
+
 /**
  * Configuration options for FalkorDB connection
  */
 export interface FalkorDBGraphConfig {
   /**
-   * Database host
+   * Database host (used only if url is not provided)
    * @default "localhost"
    */
   host?: string;
 
   /**
-   * Database port
+   * Database port (used only if url is not provided)
    * @default 6379
    */
   port?: number;
@@ -27,7 +30,8 @@ export interface FalkorDBGraphConfig {
 
   /**
    * Connection URL (alternative to host/port)
-   * Format: redis://host:port
+   * Format: falkor[s]://[[username][:password]@][host][:port][/db-number]
+   * When provided, this takes precedence over host/port
    */
   url?: string;
 
@@ -40,6 +44,18 @@ export interface FalkorDBGraphConfig {
    * Optional password for authentication
    */
   password?: string;
+
+  /**
+   * Pre-initialized FalkorDB driver instance
+   * When provided, all connection options (url, host, port, etc.) are ignored
+   */
+  driver?: FalkorDB;
+
+  /**
+   * Additional FalkorDB driver options
+   * See FalkorDB documentation for complete list of available options
+   */
+  driverOptions?: Omit<FalkorDBOptions, "url" | "username" | "password">;
 }
 
 /**
