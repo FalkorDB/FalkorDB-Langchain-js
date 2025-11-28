@@ -108,7 +108,8 @@ describe("FalkorDB Graph Tests", () => {
   });
 
   test("Test legacy URL support", async () => {
-    // Test that URL format still works for backward compatibility
+    // Test that redis:// URL format still works for backward compatibility
+    // FalkorDB driver supports both redis:// and falkor:// protocols
     const legacyGraph = await FalkorDBGraph.initialize({
       url: `redis://${host}:${port}`,
       graph: "legacyTestGraph",
