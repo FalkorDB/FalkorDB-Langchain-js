@@ -66,9 +66,7 @@ export class FalkorDBGraph {
         graph.driver = config.driver;
       } else {
         // Build driver options based on configuration
-        const driverOptions: Parameters<typeof FalkorDB.connect>[0] = {
-          ...config.driverOptions,
-        };
+        const driverOptions: Parameters<typeof FalkorDB.connect>[0] = {};
 
         // If URL is provided, use it directly (takes precedence)
         if (config.url) {
@@ -78,7 +76,6 @@ export class FalkorDBGraph {
           driverOptions.socket = {
             host: graph.host,
             port: graph.port,
-            ...config.driverOptions?.socket,
           };
         }
 

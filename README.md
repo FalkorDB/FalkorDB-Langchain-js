@@ -157,7 +157,6 @@ Creates and initializes a new FalkorDB connection.
 - `username` (string, optional): Username for authentication
 - `password` (string, optional): Password for authentication
 - `driver` (FalkorDB, optional): Pre-initialized FalkorDB driver instance. When provided, all other connection options are ignored
-- `driverOptions` (object, optional): Additional FalkorDB driver options (socket config, pool options, etc.)
 - `enhancedSchema` (boolean, optional): Enable enhanced schema details. Default: `false`
 
 **Examples:**
@@ -206,23 +205,6 @@ const graph = await FalkorDBGraph.initialize({
 // When using a pre-initialized driver, you're responsible for closing it
 await graph.close(); // This won't close the driver
 await driver.close(); // Close the driver manually
-```
-
-With additional driver options:
-```typescript
-const graph = await FalkorDBGraph.initialize({
-  host: "localhost",
-  port: 6379,
-  graph: "myGraph",
-  driverOptions: {
-    name: "my-app-client",
-    pingInterval: 60000,
-    socket: {
-      connectTimeout: 10000,
-      keepAlive: 30000
-    }
-  }
-});
 ```
 
 #### `query(query: string): Promise<any>`

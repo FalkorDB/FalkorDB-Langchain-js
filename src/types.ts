@@ -1,5 +1,4 @@
 import type { FalkorDB } from "falkordb";
-import type { FalkorDBOptions } from "falkordb/dist/src/falkordb";
 
 /**
  * Configuration options for FalkorDB connection
@@ -50,12 +49,6 @@ export interface FalkorDBGraphConfig {
    * When provided, all connection options (url, host, port, etc.) are ignored
    */
   driver?: FalkorDB;
-
-  /**
-   * Additional FalkorDB driver options
-   * See FalkorDB documentation for complete list of available options
-   */
-  driverOptions?: Omit<FalkorDBOptions, "url" | "username" | "password">;
 }
 
 /**

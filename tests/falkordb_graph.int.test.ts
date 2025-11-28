@@ -182,28 +182,6 @@ describe("FalkorDB Graph Tests", () => {
     await driver.close();
   });
 
-  test("Test additional driver options", async () => {
-    // Test passing additional driver options
-    const optionsGraph = await FalkorDBGraph.initialize({
-      host,
-      port,
-      graph: "optionsTestGraph",
-      driverOptions: {
-        name: "test-client",
-        pingInterval: 60000,
-      },
-    });
-
-    expect(optionsGraph.isConnected()).toBe(true);
-    expect(optionsGraph.hasSelectedGraph()).toBe(true);
-
-    // Verify it can execute queries
-    const result = await optionsGraph.query('RETURN "options-test" AS output');
-    expect(result.data).toEqual([{ output: "options-test" }]);
-
-    await optionsGraph.close();
-  });
-
   test("Test URL takes precedence over host/port", async () => {
     // When both URL and host/port are provided, URL should take precedence
     const mixedGraph = await FalkorDBGraph.initialize({
