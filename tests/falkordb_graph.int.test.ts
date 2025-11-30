@@ -150,14 +150,18 @@ describe("FalkorDB Graph Tests", () => {
       },
     });
 
-    // Pass the driver to FalkorDBGraph
+    // Pass the driver to FalkorDBGraph with host/port for display purposes
     const driverGraph = await FalkorDBGraph.initialize({
       driver,
+      host,
+      port,
       graph: "driverTestGraph",
     });
 
     expect(driverGraph.isConnected()).toBe(true);
     expect(driverGraph.hasSelectedGraph()).toBe(true);
+    // Verify getConnectionUrl uses the provided host/port
+    expect(driverGraph.getConnectionUrl()).toBe(`http://${host}:${port}`);
 
     // Verify it can execute queries
     const result = await driverGraph.query('RETURN "driver-test" AS output');

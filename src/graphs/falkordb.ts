@@ -36,9 +36,11 @@ export class FalkorDBGraph {
       this.isExternalDriver = !!config.driver;
 
       // Store host/port for getConnectionUrl() method
-      // Priority: driver (no parsing needed) > URL (parse for display) > host/port
+      // Priority: driver (use config host/port if provided) > URL (parse) > host/port
       if (config.driver) {
-        // When driver is provided, use default values for display purposes
+        // When driver is provided, the driver handles the connection
+        // Use host/port from config if provided (for display purposes like getConnectionUrl())
+        // If not provided in config, fall back to defaults
         this.host = config.host ?? "localhost";
         this.port = config.port ?? 6379;
       } else if (config.url) {
