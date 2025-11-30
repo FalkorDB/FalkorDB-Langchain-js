@@ -80,6 +80,67 @@ console.log(response);
 await graph.close();
 ```
 
+### 3. Advanced Connection Options
+
+The library supports multiple ways to connect to FalkorDB:
+
+#### Using a URL
+
+```typescript
+// Simple URL connection
+const graph = await FalkorDBGraph.initialize({
+  url: "falkor://localhost:6379",
+  graph: "movies"
+});
+
+// URL with authentication
+const graph = await FalkorDBGraph.initialize({
+  url: "falkor://username:password@myserver:6379",
+  graph: "movies"
+});
+```
+
+#### Using a Pre-initialized Driver
+
+This is useful when you need full control over the driver configuration or want to share a driver across multiple graph instances:
+
+```typescript
+import { FalkorDB } from "falkordb";
+
+// Create a driver with custom configuration
+const driver = await FalkorDB.connect({
+  socket: { 
+    host: "localhost", 
+    port: 6379,
+    connectTimeout: 10000
+  },
+  username: "myuser",
+  password: "mypassword",
+  poolOptions: {
+    min: 2,
+    max: 10
+  }
+});
+
+// Use the driver with multiple graphs
+const moviesGraph = await FalkorDBGraph.initialize({
+  driver: driver,
+  graph: "movies"
+});
+
+const booksGraph = await FalkorDBGraph.initialize({
+  driver: driver,
+  graph: "books"
+});
+
+// Close graphs (won't close the shared driver)
+await moviesGraph.close();
+await booksGraph.close();
+
+// Close the driver when done
+await driver.close();
+```
+
 ## API Reference
 
 ### FalkorDBGraph
@@ -89,13 +150,18 @@ await graph.close();
 Creates and initializes a new FalkorDB connection.
 
 **Config Options:**
-- `host` (string, optional): Database host. Default: `"localhost"`
-- `port` (number, optional): Database port. Default: `6379`
+- `host` (string, optional): Database host. Default: `"localhost"` (ignored if `url` or `driver` is provided)
+- `port` (number, optional): Database port. Default: `6379` (ignored if `url` or `driver` is provided)
 - `graph` (string, optional): Graph name to use
-- `url` (string, optional): Alternative connection URL format
+- `url` (string, optional): Connection URL format: `falkor[s]://[[username][:password]@][host][:port][/db-number]`. Takes precedence over `host` and `port`
+- `username` (string, optional): Username for authentication
+- `password` (string, optional): Password for authentication
+- `driver` (FalkorDB, optional): Pre-initialized FalkorDB driver instance. When provided, all other connection options are ignored
 - `enhancedSchema` (boolean, optional): Enable enhanced schema details. Default: `false`
 
-**Example:**
+**Examples:**
+
+Using host and port:
 ```typescript
 const graph = await FalkorDBGraph.initialize({
   host: "localhost",
@@ -103,6 +169,42 @@ const graph = await FalkorDBGraph.initialize({
   graph: "myGraph",
   enhancedSchema: true
 });
+```
+
+Using connection URL:
+```typescript
+const graph = await FalkorDBGraph.initialize({
+  url: "falkor://localhost:6379",
+  graph: "myGraph"
+});
+```
+
+Using connection URL with authentication:
+```typescript
+const graph = await FalkorDBGraph.initialize({
+  url: "falkor://username:password@localhost:6379",
+  graph: "myGraph"
+});
+```
+
+Using a pre-initialized driver:
+```typescript
+import { FalkorDB } from "falkordb";
+
+const driver = await FalkorDB.connect({
+  socket: { host: "localhost", port: 6379 },
+  username: "myuser",
+  password: "mypassword"
+});
+
+const graph = await FalkorDBGraph.initialize({
+  driver: driver,
+  graph: "myGraph"
+});
+
+// When using a pre-initialized driver, you're responsible for closing it
+await graph.close(); // This won't close the driver
+await driver.close(); // Close the driver manually
 ```
 
 #### `query(query: string): Promise<any>`

@@ -1,19 +1,6 @@
 import { FalkorDB, Graph } from "falkordb";
+import type { FalkorDBGraphConfig, StructuredSchema } from "../types";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-
-interface FalkorDBGraphConfig {
-  host?: string;
-  port?: number;
-  graph?: string;
-  enhancedSchema?: boolean;
-  url?: string;
-}
-
-interface StructuredSchema {
-  nodeProps: { [key: string]: string[] };
-  relProps: { [key: string]: string[] };
-  relationships: { start: string; type: string; end: string }[];
-}
 
 export class FalkorDBGraph {
   private driver!: FalkorDB;
@@ -34,27 +21,43 @@ export class FalkorDBGraph {
 
   private port: number;
 
+  private isExternalDriver: boolean = false;
+
   // LangChain compatibility properties
   public database: string = "falkordb";
   public timeoutMs: number = 30000;
   public enhancedSchemaCypher: boolean = false;
 
-  constructor({
-    host = "localhost",
-    port = 6379,
-    enhancedSchema = false,
-    url,
-  }: FalkorDBGraphConfig) {
+  constructor(config: FalkorDBGraphConfig) {
     try {
-      this.enhancedSchema = enhancedSchema;
+      this.enhancedSchema = config.enhancedSchema ?? false;
 
-      if (url) {
-        const parsedUrl = new URL(url);
-        this.host = parsedUrl.hostname;
-        this.port = parsedUrl.port ? parseInt(parsedUrl.port, 10) : 6379;
+      // Mark if using external driver
+      this.isExternalDriver = !!config.driver;
+
+      // Store host/port for getConnectionUrl() method
+      // Priority: driver (use config host/port if provided) > URL (parse) > host/port
+      if (config.driver) {
+        // When driver is provided, the driver handles the connection
+        // Use host/port from config if provided (for display purposes like getConnectionUrl())
+        // If not provided in config, fall back to defaults
+        this.host = config.host ?? "localhost";
+        this.port = config.port ?? 6379;
+      } else if (config.url) {
+        // Parse URL to extract host/port for getConnectionUrl()
+        try {
+          const parsedUrl = new URL(config.url);
+          this.host = parsedUrl.hostname || "localhost";
+          this.port = parsedUrl.port ? parseInt(parsedUrl.port, 10) : 6379;
+        } catch (urlError) {
+          // If URL parsing fails, fall back to host/port
+          this.host = config.host ?? "localhost";
+          this.port = config.port ?? 6379;
+        }
       } else {
-        this.host = host;
-        this.port = port;
+        // Use host/port directly
+        this.host = config.host ?? "localhost";
+        this.port = config.port ?? 6379;
       }
     } catch (error) {
       console.error("Error in FalkorDBGraph constructor:", error);
@@ -66,14 +69,35 @@ export class FalkorDBGraph {
     const graph = new FalkorDBGraph(config);
 
     try {
-      const driver = await FalkorDB.connect({
-        socket: {
-          host: graph.host,
-          port: graph.port,
-        },
-      });
+      // Use pre-initialized driver if provided
+      if (config.driver) {
+        graph.driver = config.driver;
+      } else {
+        // Build driver options based on configuration
+        const driverOptions: Parameters<typeof FalkorDB.connect>[0] = {};
 
-      graph.driver = driver;
+        // If URL is provided, use it directly (takes precedence)
+        if (config.url) {
+          driverOptions.url = config.url;
+        } else {
+          // Otherwise, use socket configuration
+          driverOptions.socket = {
+            host: graph.host,
+            port: graph.port,
+          };
+        }
+
+        // Add authentication if provided
+        if (config.username) {
+          driverOptions.username = config.username;
+        }
+        if (config.password) {
+          driverOptions.password = config.password;
+        }
+
+        graph.driver = await FalkorDB.connect(driverOptions);
+      }
+
       await graph.verifyConnectivity();
 
       // If a default graph is specified, select it
@@ -255,7 +279,9 @@ export class FalkorDBGraph {
 
   async close(): Promise<void> {
     try {
-      if (this.driver) {
+      // Only close the driver if it was created internally
+      // Don't close externally provided drivers
+      if (this.driver && !this.isExternalDriver) {
         await this.driver.close();
       }
     } catch (error) {

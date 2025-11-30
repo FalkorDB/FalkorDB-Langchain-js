@@ -108,7 +108,8 @@ describe("FalkorDB Graph Tests", () => {
   });
 
   test("Test legacy URL support", async () => {
-    // Test that URL format still works for backward compatibility
+    // Test that redis:// URL format still works for backward compatibility
+    // FalkorDB driver supports both redis:// and falkor:// protocols
     const legacyGraph = await FalkorDBGraph.initialize({
       url: `redis://${host}:${port}`,
       graph: "legacyTestGraph",
@@ -119,5 +120,88 @@ describe("FalkorDB Graph Tests", () => {
     expect(legacyGraph.getConnectionUrl()).toBe(`http://${host}:${port}`);
 
     await legacyGraph.close();
+  });
+
+  test("Test URL with falkor:// protocol", async () => {
+    // Test that falkor:// URL format works
+    const urlGraph = await FalkorDBGraph.initialize({
+      url: `falkor://${host}:${port}`,
+      graph: "urlTestGraph",
+    });
+
+    expect(urlGraph.isConnected()).toBe(true);
+    expect(urlGraph.hasSelectedGraph()).toBe(true);
+    expect(urlGraph.getConnectionUrl()).toBe(`http://${host}:${port}`);
+
+    // Verify it can execute queries
+    const result = await urlGraph.query('RETURN "url-test" AS output');
+    expect(result.data).toEqual([{ output: "url-test" }]);
+
+    await urlGraph.close();
+  });
+
+  test("Test pre-initialized driver", async () => {
+    // Create a FalkorDB driver
+    const { FalkorDB } = await import("falkordb");
+    const driver = await FalkorDB.connect({
+      socket: {
+        host,
+        port,
+      },
+    });
+
+    // Pass the driver to FalkorDBGraph with host/port for display purposes
+    const driverGraph = await FalkorDBGraph.initialize({
+      driver,
+      host,
+      port,
+      graph: "driverTestGraph",
+    });
+
+    expect(driverGraph.isConnected()).toBe(true);
+    expect(driverGraph.hasSelectedGraph()).toBe(true);
+    // Verify getConnectionUrl uses the provided host/port
+    expect(driverGraph.getConnectionUrl()).toBe(`http://${host}:${port}`);
+
+    // Verify it can execute queries
+    const result = await driverGraph.query('RETURN "driver-test" AS output');
+    expect(result.data).toEqual([{ output: "driver-test" }]);
+
+    // Close the graph (should not close the external driver)
+    await driverGraph.close();
+
+    // Verify the driver is still connected by creating another graph with it
+    const driverGraph2 = await FalkorDBGraph.initialize({
+      driver,
+      graph: "driverTestGraph2",
+    });
+
+    expect(driverGraph2.isConnected()).toBe(true);
+    const result2 = await driverGraph2.query('RETURN "driver-test-2" AS output');
+    expect(result2.data).toEqual([{ output: "driver-test-2" }]);
+
+    await driverGraph2.close();
+
+    // Manually close the driver
+    await driver.close();
+  });
+
+  test("Test URL takes precedence over host/port", async () => {
+    // When both URL and host/port are provided, URL should take precedence
+    const mixedGraph = await FalkorDBGraph.initialize({
+      url: `falkor://${host}:${port}`,
+      host: "invalid-host",
+      port: 9999,
+      graph: "mixedTestGraph",
+    });
+
+    expect(mixedGraph.isConnected()).toBe(true);
+    expect(mixedGraph.hasSelectedGraph()).toBe(true);
+
+    // Verify it can execute queries (proving it used the URL, not invalid host/port)
+    const result = await mixedGraph.query('RETURN "mixed-test" AS output');
+    expect(result.data).toEqual([{ output: "mixed-test" }]);
+
+    await mixedGraph.close();
   });
 });
