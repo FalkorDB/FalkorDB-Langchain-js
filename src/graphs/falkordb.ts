@@ -32,9 +32,17 @@ export class FalkorDBGraph {
     try {
       this.enhancedSchema = config.enhancedSchema ?? false;
 
+      // Mark if using external driver
+      this.isExternalDriver = !!config.driver;
+
       // Store host/port for getConnectionUrl() method
-      // These are computed from URL if provided, or use defaults
-      if (config.url) {
+      // Priority: driver (no parsing needed) > URL (parse for display) > host/port
+      if (config.driver) {
+        // When driver is provided, use default values for display purposes
+        this.host = config.host ?? "localhost";
+        this.port = config.port ?? 6379;
+      } else if (config.url) {
+        // Parse URL to extract host/port for getConnectionUrl()
         try {
           const parsedUrl = new URL(config.url);
           this.host = parsedUrl.hostname || "localhost";
@@ -45,12 +53,10 @@ export class FalkorDBGraph {
           this.port = config.port ?? 6379;
         }
       } else {
+        // Use host/port directly
         this.host = config.host ?? "localhost";
         this.port = config.port ?? 6379;
       }
-
-      // Mark if using external driver
-      this.isExternalDriver = !!config.driver;
     } catch (error) {
       console.error("Error in FalkorDBGraph constructor:", error);
       throw new Error("Failed to initialize FalkorDBGraph.");
