@@ -368,7 +368,7 @@ MIT © FalkorDB
 ## Support
 
 - 📫 [GitHub Issues](https://github.com/FalkorDB/FalkorDB-Langchain-js/issues)
-- 💬 [FalkorDB Discord](https://discord.gg/falkordb)
+- 💬 [FalkorDB Discord](https://discord.gg/6M4QwDXn2w)
 - 📧 Email: support@falkordb.com
 - 🌐 Website: https://www.falkordb.com/
 
