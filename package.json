@@ -49,7 +49,7 @@
     "langchain": ">=0.1.0"
   },
   "dependencies": {
-    "falkordb": "^6.3.0"
+    "falkordb": "^7.0.1"
   },
   "devDependencies": {
     "@langchain/community": "^1.1.17",
